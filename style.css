@@ -1,0 +1,136 @@
+/* Cinematic Netflix-like dark theme (full screen) */
+:root{
+  --bg:#050505;
+  --card:#0f0f10;
+  --accent:#e50914;
+  --muted:#9a9a9a;
+  --glass: rgba(255,255,255,0.04);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:linear-gradient(180deg,#030304 0%, #0b0b0c 60%);font-family:Inter,system-ui,Segoe UI,Roboto,'Poppins',sans-serif;color:#fff;overflow:hidden}
+
+/* watermark big faint text */
+.watermark{
+  position:fixed;
+  inset:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  pointer-events:none;
+  font-size:clamp(24px,8vw,140px);
+  color:rgba(255,255,255,0.03);
+  font-weight:800;
+  letter-spacing:6px;
+  text-transform:uppercase;
+  transform:rotate(-8deg);
+  z-index:0;
+}
+
+/* page centering container */
+.page{position:relative;z-index:2;height:100%;display:flex;align-items:center;justify-content:center;padding:24px}
+.page--hidden{display:none}
+.page--center{align-items:center}
+
+/* login card */
+.login-card{
+  width:min(560px,92%);
+  background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius:12px;
+  padding:34px;
+  box-shadow:0 12px 40px rgba(0,0,0,0.7), 0 0 40px rgba(229,9,20,0.06);
+  border:1px solid rgba(255,255,255,0.03);
+  text-align:center;
+  backdrop-filter: blur(6px);
+}
+
+/* branding */
+.logo{font-size:36px;color:var(--accent);margin:0 0 6px;font-weight:800;letter-spacing:2px}
+.slogan{margin:0 0 20px;color:var(--muted);font-style:italic}
+
+/* fields */
+.field input{
+  width:100%;
+  padding:12px 14px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,0.04);
+  background:#0b0b0b;
+  color:#fff;
+  font-size:15px;
+  outline:none;
+}
+.field input:focus{box-shadow:0 0 18px rgba(229,9,20,0.12);border-color:rgba(229,9,20,0.28)}
+
+/* gender */
+.gender-row{display:flex;gap:12px;justify-content:center;margin-bottom:18px}
+.gender{display:flex;align-items:center;gap:8px;background:var(--glass);padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,0.02)}
+.gender input{accent-color:var(--accent)}
+.gender span{font-size:14px;color:#ddd}
+
+/* buttons */
+.btn{padding:10px 14px;border-radius:8px;border:none;cursor:pointer;font-weight:600}
+.btn.primary{background:var(--accent);color:#fff;box-shadow:0 8px 30px rgba(229,9,20,0.12)}
+.btn.link{background:transparent;color:#bbb;padding:6px 8px;border-radius:6px}
+.tiny-note{color:var(--muted);font-size:12px;margin-top:12px}
+
+/* Chat screen layout (full screen) */
+.chat-header{
+  position:fixed;top:24px;left:24px;right:24px;display:flex;justify-content:space-between;align-items:center;z-index:3;
+  pointer-events:auto;
+}
+.brand h2{margin:0;color:var(--accent);letter-spacing:1px}
+.meta{display:flex;gap:12px;align-items:center;color:var(--muted);font-size:14px}
+#userBadge{background:rgba(255,255,255,0.03);padding:6px 10px;border-radius:20px;border:1px solid rgba(255,255,255,0.02)}
+.slogan-mini{position:fixed;top:64px;left:24px;color:rgba(255,255,255,0.6);font-size:12px}
+
+/* messages container */
+.messages{
+  position:fixed;
+  top:120px;
+  bottom:90px;
+  left:6%;
+  right:6%;
+  border-radius:12px;
+  padding:26px;
+  overflow:auto;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  z-index:2;
+  background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.12));
+  border:1px solid rgba(255,255,255,0.02);
+  box-shadow:0 20px 60px rgba(0,0,0,0.6);
+}
+
+/* composer fixed at bottom */
+.composer{
+  position:fixed;left:6%;right:6%;bottom:24px;z-index:3;display:flex;gap:12px;align-items:center;
+  background:transparent;
+}
+.composer input{
+  flex:1;padding:14px 16px;border-radius:999px;border:1px solid rgba(255,255,255,0.04);background:#0b0b0b;color:#fff;font-size:16px;outline:none;
+  box-shadow:0 6px 30px rgba(0,0,0,0.6);
+}
+.btn.send{background:var(--accent);padding:12px 18px;border-radius:999px;font-weight:700}
+
+/* message bubble styles */
+.message{
+  max-width:min(70%,780px);padding:12px 14px;border-radius:12px;backdrop-filter: blur(4px);position:relative;display:inline-block;line-height:1.2;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  border:1px solid rgba(255,255,255,0.02);
+  word-break:break-word;
+}
+.message .metaLine{display:block;font-size:12px;color:var(--muted);margin-bottom:8px}
+.message .user{font-weight:700;color:var(--accent);margin-right:8px}
+.message.self{margin-left:auto;background:linear-gradient(180deg,#151515,#272727);border-left:4px solid rgba(229,9,20,0.18)}
+.message.other{margin-right:auto;background:linear-gradient(180deg,#0d0d0d,#141414);border-right:4px solid rgba(255,255,255,0.02)}
+
+/* gender badge next to name */
+.gender-badge{display:inline-block;padding:2px 8px;margin-left:8px;border-radius:999px;font-size:11px;color:#111;background:rgba(229,9,14,0.9);font-weight:700}
+
+/* small screens */
+@media (max-width:700px){
+  .messages{left:4%;right:4%;top:110px;bottom:100px;padding:16px}
+  .composer{left:4%;right:4%;bottom:18px}
+  .login-card{width:100%}
+}

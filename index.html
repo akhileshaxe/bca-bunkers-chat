@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BCA Bunkers Chat</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- WATERMARK / BACKDROP TEXT -->
+  <div class="watermark">project by akhil</div>
+
+  <!-- LOGIN / WELCOME SCREEN (first interface) -->
+  <main id="loginPage" class="page page--center">
+    <div class="card login-card" role="dialog" aria-label="Welcome to BCA Bunkers">
+      <h1 class="logo">BCA Bunkers</h1>
+      <p class="slogan">"ikda meme boss ra"</p>
+
+      <label class="field">
+        <input id="usernameInput" type="text" placeholder="Enter your name" autocomplete="name" />
+      </label>
+
+      <div class="gender-row">
+        <label class="gender">
+          <input type="radio" name="gender" value="Male" checked />
+          <span>Male</span>
+        </label>
+        <label class="gender">
+          <input type="radio" name="gender" value="Female" />
+          <span>Female</span>
+        </label>
+        <label class="gender">
+          <input type="radio" name="gender" value="Gay" />
+          <span>Gay</span>
+        </label>
+      </div>
+
+      <div class="login-actions">
+        <button id="enterBtn" class="btn primary">Enter Chat</button>
+      </div>
+
+      <p class="tiny-note">Full screen cinematic chat · Multi-user</p>
+    </div>
+  </main>
+
+  <!-- CHAT SCREEN (full screen when chatting) -->
+  <section id="chatPage" class="page page--hidden" aria-hidden="true">
+    <header class="chat-header">
+      <div class="brand">
+        <h2>BCA Bunkers</h2>
+        <div class="meta"><span id="userBadge"></span><button id="logoutBtn" class="btn link">Logout</button></div>
+      </div>
+      <p class="slogan-mini">"ikda meme boss ra"</p>
+    </header>
+
+    <div id="messages" class="messages" role="log" aria-live="polite"></div>
+
+    <form id="composer" class="composer" autocomplete="off">
+      <input id="messageInput" type="text" placeholder="Type a message and press Enter..." />
+      <button id="sendBtn" class="btn send">Send</button>
+    </form>
+  </section>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
