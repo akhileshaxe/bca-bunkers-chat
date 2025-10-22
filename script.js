@@ -1,15 +1,7 @@
-// script.js (module)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-import {
-  getDatabase,
-  ref,
-  push,
-  set,
-  onChildAdded,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+import { getDatabase, ref, push, set, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
-/* --- Firebase config (your project) --- */
+/* Firebase Config */
 const firebaseConfig = {
   apiKey: "AIzaSyC09cDkib8NXK59pym0s6BHXoGtO7OImJs",
   authDomain: "bca-bunkers.firebaseapp.com",
@@ -19,162 +11,139 @@ const firebaseConfig = {
   appId: "1:990334722791:web:7493264f408f61fe413842",
   measurementId: "G-EEGW5M2RW0"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* --- Elements --- */
+/* Elements */
 const loginPage = document.getElementById("loginPage");
 const chatPage = document.getElementById("chatPage");
 const usernameInput = document.getElementById("usernameInput");
-const enterBtn = document.getElementById("enterBtn");
+const createRoomBtn = document.getElementById("createRoomBtn");
+const joinRoomBtn = document.getElementById("joinRoomBtn");
+const roomJoinInputContainer = document.getElementById("roomJoinInputContainer");
+const confirmJoinBtn = document.getElementById("confirmJoinBtn");
+const roomIdInput = document.getElementById("roomIdInput");
 const messagesDiv = document.getElementById("messages");
-const composer = document.getElementById("composer");
 const messageInput = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
 const userBadge = document.getElementById("userBadge");
+const roomInfo = document.getElementById("roomInfo");
 const logoutBtn = document.getElementById("logoutBtn");
 
 let username = "";
 let gender = "";
+let roomId = "";
 
-/* --- Helpers --- */
-function $(sel){return document.querySelector(sel)}
-function formatTime(ts){
-  const d = new Date(ts);
-  return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+/* Helpers */
+function randomRoomId() {
+  return "ROOM" + Math.floor(10000 + Math.random() * 90000);
 }
 
-/* --- Login flow (remember user in localStorage) --- */
-function initFromLocal(){
-  const storedName = localStorage.getItem("bca_username");
-  const storedGender = localStorage.getItem("bca_gender");
-  if(storedName && storedGender){
-    username = storedName;
-    gender = storedGender;
-    enterChat();
-  }
-}
-initFromLocal();
-
-enterBtn.addEventListener("click", () => {
+/* Create Room */
+createRoomBtn.onclick = () => {
   const name = usernameInput.value.trim();
   const genderRad = document.querySelector('input[name="gender"]:checked');
-  if(!name){
-    alert("Please enter your name!");
-    return;
-  }
-  if(!genderRad){
-    alert("Please select gender!");
-    return;
-  }
+  if (!name) return alert("Please enter your name!");
   username = name;
   gender = genderRad.value;
-  // persist
+  roomId = randomRoomId();
   localStorage.setItem("bca_username", username);
   localStorage.setItem("bca_gender", gender);
-  enterChat();
-});
+  localStorage.setItem("bca_room", roomId);
 
-function enterChat(){
+  // Show popup
+  document.getElementById("roomIdDisplay").textContent = roomId;
+  document.getElementById("roomPopup").classList.remove("hidden");
+};
+
+/* Join Room */
+joinRoomBtn.onclick = () => {
+  roomJoinInputContainer.style.display = "block";
+};
+confirmJoinBtn.onclick = () => {
+  const name = usernameInput.value.trim();
+  const genderRad = document.querySelector('input[name="gender"]:checked');
+  const inputId = roomIdInput.value.trim();
+  if (!name || !inputId) return alert("Enter name and Room ID!");
+  username = name;
+  gender = genderRad.value;
+  roomId = inputId;
+  localStorage.setItem("bca_username", username);
+  localStorage.setItem("bca_gender", gender);
+  localStorage.setItem("bca_room", roomId);
+  enterChat();
+};
+
+/* Enter Chat */
+function enterChat() {
   loginPage.classList.add("page--hidden");
   chatPage.classList.remove("page--hidden");
-  chatPage.setAttribute("aria-hidden","false");
   userBadge.textContent = `${username} · ${gender}`;
+  roomInfo.textContent = `#${roomId}`;
+  messagesDiv.innerHTML = "";
   listenMessages();
 }
 
-/* Logout */
-logoutBtn.addEventListener("click", () => {
-  localStorage.removeItem("bca_username");
-  localStorage.removeItem("bca_gender");
-  username = "";
-  gender = "";
-  messagesDiv.innerHTML = "";
-  chatPage.classList.add("page--hidden");
-  loginPage.classList.remove("page--hidden");
-  loginPage.querySelector("input")?.focus();
-});
-
-/* Send message (on button or Enter) */
-composer.addEventListener("submit", (e) => {
+/* Send Message */
+sendBtn.onclick = (e) => {
   e.preventDefault();
-  sendMessage();
-});
-sendBtn.addEventListener("click", (e) => {
-  e.preventDefault();
-  sendMessage();
-});
-
-function sendMessage(){
   const text = messageInput.value.trim();
-  if(!text) return;
-  const messagesRef = ref(db, "messages");
-  const newRef = push(messagesRef);
-  set(newRef, {
-    user: username,
-    gender: gender,
-    text: text,
-    timestamp: Date.now()
-  }).catch(err => console.error("Write failed:", err));
+  if (!text) return;
+  const msgRef = ref(db, `rooms/${roomId}/messages`);
+  const newMsg = push(msgRef);
+  set(newMsg, { user: username, gender, text, timestamp: Date.now() });
   messageInput.value = "";
-}
+};
 
-/* --- Listen for incoming messages --- */
-let started = false;
-function listenMessages(){
-  if(started) return;
-  started = true;
-  const messagesRef = ref(db, "messages");
-  onChildAdded(messagesRef, (snap) => {
+/* Listen Messages */
+function listenMessages() {
+  const msgRef = ref(db, `rooms/${roomId}/messages`);
+  onChildAdded(msgRef, (snap) => {
     const msg = snap.val();
-    if(!msg) return;
     appendMessage(msg);
   });
 }
 
-/* Append message element */
-function appendMessage(msg){
+/* Append Message */
+function appendMessage(msg) {
   const el = document.createElement("div");
-  el.className = "message " + ((msg.user === username) ? "self" : "other");
-
-  const ts = msg.timestamp || Date.now();
-  const time = formatTime(ts);
-
-  // gender badge color variation
-  const genderBadge = `<span class="gender-badge">${(msg.gender||"")}</span>`;
-
+  el.className = "message " + (msg.user === username ? "self" : "other");
+  const time = new Date(msg.timestamp).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
   el.innerHTML = `
-    <span class="metaLine"><span class="user">${escapeHtml(msg.user)}</span>${genderBadge} <span style="color:var(--muted)">· ${time}</span></span>
-    <div class="text">${escapeHtml(msg.text)}</div>
+    <span class="metaLine">
+      <span class="user">${msg.user}</span>
+      <span class="gender-badge">${msg.gender}</span>
+      <span style="color:var(--muted)">· ${time}</span>
+    </span>
+    <div class="text">${msg.text}</div>
   `;
-
   messagesDiv.appendChild(el);
-  // keep latest visible
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-/* Basic escaping for messages */
-function escapeHtml(s){
-  return String(s)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;");
-}
-
-/* Shortcut keys */
-messageInput.addEventListener("keydown",(e)=>{
-  if(e.key === "Escape"){
-    // go back to login
-    logoutBtn.click();
+/* Logout & Clear Room */
+logoutBtn.onclick = async () => {
+  if (confirm("Exit room? Chat will be cleared.")) {
+    await remove(ref(db, `rooms/${roomId}/messages`));
+    localStorage.clear();
+    location.reload();
   }
-});
+};
 
-/* Accessibility: focus composer when chat opens */
-document.addEventListener("transitionend", () => {
-  if(!loginPage.classList.contains("page--hidden")){
-    usernameInput.focus();
-  } else {
-    messageInput.focus();
-  }
-});
+/* Popup Logic */
+const popup = document.getElementById("roomPopup");
+const copyBtn = document.getElementById("copyRoomBtn");
+const closePopupBtn = document.getElementById("closePopupBtn");
+
+copyBtn.onclick = () => {
+  const text = document.getElementById("roomIdDisplay").textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    copyBtn.textContent = "Copied!";
+    setTimeout(() => (copyBtn.textContent = "Copy"), 2000);
+  });
+};
+
+closePopupBtn.onclick = () => {
+  popup.classList.add("hidden");
+  enterChat();
+};
