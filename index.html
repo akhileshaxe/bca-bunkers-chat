@@ -1,77 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BCA Bunkers Chat</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- WATERMARK -->
-  <div class="watermark">project by akhil</div>
+  <div class="watermark">Project by Akhil</div>
 
-  <!-- LOGIN PAGE -->
-  <main id="loginPage" class="page page--center">
-    <div class="card login-card">
+  <!-- Login Page -->
+  <div id="loginPage" class="page page--center">
+    <div class="login-card">
       <h1 class="logo">BCA Bunkers</h1>
-      <p class="slogan">"ikda meme boss ra"</p>
+      <p class="slogan">"Ikda Meme Boss Ra"</p>
 
-      <label class="field">
-        <input id="usernameInput" type="text" placeholder="Enter your name" />
-      </label>
-
-      <div class="gender-row">
-        <label class="gender"><input type="radio" name="gender" value="Male" checked /><span>Male</span></label>
-        <label class="gender"><input type="radio" name="gender" value="Female" /><span>Female</span></label>
-        <label class="gender"><input type="radio" name="gender" value="Other" /><span>Other</span></label>
+      <div class="field">
+        <input id="usernameInput" placeholder="Enter your name..." />
       </div>
 
-      <div class="room-options">
+      <div class="gender-row">
+        <label class="gender"><input type="radio" name="gender" value="Male"><span>Male</span></label>
+        <label class="gender"><input type="radio" name="gender" value="Female"><span>Female</span></label>
+        <label class="gender"><input type="radio" name="gender" value="Gay"><span>Gay</span></label>
+      </div>
+
+      <div id="mainOptions" class="main-options">
         <button id="createRoomBtn" class="btn primary">Create Room</button>
         <button id="joinRoomBtn" class="btn primary">Join Room</button>
       </div>
 
-      <div id="roomJoinInputContainer" class="field" style="display:none;">
-        <input id="roomIdInput" type="text" placeholder="Enter Room ID to Join" />
-        <button id="confirmJoinBtn" class="btn primary" style="margin-top:8px;">Join</button>
+      <div id="roomJoinInputContainer" class="hidden">
+        <input id="roomIdInput" placeholder="Enter Room ID..." class="room-input">
+        <div style="margin-top:12px;">
+          <button id="confirmJoinBtn" class="btn primary">Join</button>
+          <button id="backBtn" class="btn link">Back</button>
+        </div>
       </div>
 
-      <p class="tiny-note">Private Bunk Chat — Secret Rooms</p>
+      <p class="tiny-note">Chat privately using room ID</p>
     </div>
-  </main>
+  </div>
 
-  <!-- CHAT PAGE -->
-  <section id="chatPage" class="page page--hidden">
+  <!-- Chat Page -->
+  <div id="chatPage" class="page page--hidden">
     <header class="chat-header">
       <div class="brand">
         <h2>BCA Bunkers</h2>
-        <div class="meta">
-          <span id="userBadge"></span>
-          <span id="roomInfo"></span>
-          <button id="logoutBtn" class="btn link">Exit</button>
-        </div>
+        <h3 id="roomNameDisplay"></h3>
       </div>
-      <p class="slogan-mini">"ikda meme boss ra"</p>
+      <div class="meta">
+        <span id="userBadge"></span>
+        <span id="roomInfo"></span>
+        <button id="logoutBtn" class="btn link">Logout</button>
+      </div>
     </header>
 
     <div id="messages" class="messages"></div>
 
     <form id="composer" class="composer">
-      <input id="messageInput" type="text" placeholder="Type a message..." />
-      <button id="sendBtn" class="btn send">Send</button>
+      <input id="messageInput" placeholder="Type a message..." autocomplete="off" />
+      <button id="sendBtn" class="btn send">➤</button>
     </form>
-  </section>
+  </div>
 
-  <!-- ROOM ID POPUP -->
+  <!-- Room Popup -->
   <div id="roomPopup" class="popup hidden">
     <div class="popup-content">
-      <h2>Room Created 🔥</h2>
-      <p>Share this Room ID with your friends:</p>
-      <div class="room-id-box">
-        <span id="roomIdDisplay"></span>
-        <button id="copyRoomBtn" class="btn copy">Copy</button>
-      </div>
-      <button id="closePopupBtn" class="btn primary">Start Chat</button>
+      <h3>Room Created!</h3>
+      <p>Your Room ID:</p>
+      <div id="roomIdDisplay" class="room-id-display"></div>
+      <button id="copyRoomBtn" class="btn primary">Copy</button>
+      <button id="closePopupBtn" class="btn link">Start Chat</button>
     </div>
   </div>
 
