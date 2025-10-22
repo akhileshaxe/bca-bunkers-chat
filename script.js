@@ -1,149 +1,203 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-import { getDatabase, ref, push, set, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+// =======================
+// BCA Bunkers Chat Logic
+// =======================
 
-/* Firebase Config */
-const firebaseConfig = {
-  apiKey: "AIzaSyC09cDkib8NXK59pym0s6BHXoGtO7OImJs",
-  authDomain: "bca-bunkers.firebaseapp.com",
-  projectId: "bca-bunkers",
-  storageBucket: "bca-bunkers.firebasestorage.app",
-  messagingSenderId: "990334722791",
-  appId: "1:990334722791:web:7493264f408f61fe413842",
-  measurementId: "G-EEGW5M2RW0"
-};
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-/* Elements */
 const loginPage = document.getElementById("loginPage");
 const chatPage = document.getElementById("chatPage");
-const usernameInput = document.getElementById("usernameInput");
-const createRoomBtn = document.getElementById("createRoomBtn");
-const joinRoomBtn = document.getElementById("joinRoomBtn");
-const roomJoinInputContainer = document.getElementById("roomJoinInputContainer");
-const confirmJoinBtn = document.getElementById("confirmJoinBtn");
-const roomIdInput = document.getElementById("roomIdInput");
-const messagesDiv = document.getElementById("messages");
+const messagesContainer = document.getElementById("messages");
 const messageInput = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
 const userBadge = document.getElementById("userBadge");
-const roomInfo = document.getElementById("roomInfo");
 const logoutBtn = document.getElementById("logoutBtn");
 
 let username = "";
 let gender = "";
 let roomId = "";
+let roomName = "";
+let typingTimeout;
+let typingIndicator;
 
-/* Helpers */
-function randomRoomId() {
-  return "ROOM" + Math.floor(10000 + Math.random() * 90000);
-}
+// =======================
+// FIRST INTERFACE LOGIC
+// =======================
+document.addEventListener("DOMContentLoaded", () => {
+  const createRoomBtn = document.getElementById("createRoomBtn");
+  const joinRoomBtn = document.getElementById("joinRoomBtn");
+  const enterBtn = document.getElementById("enterBtn");
+  const backBtn = document.getElementById("backBtn");
+  const usernameInput = document.getElementById("usernameInput");
 
-/* Create Room */
-createRoomBtn.onclick = () => {
-  const name = usernameInput.value.trim();
-  const genderRad = document.querySelector('input[name="gender"]:checked');
-  if (!name) return alert("Please enter your name!");
-  username = name;
-  gender = genderRad.value;
-  roomId = randomRoomId();
-  localStorage.setItem("bca_username", username);
-  localStorage.setItem("bca_gender", gender);
-  localStorage.setItem("bca_room", roomId);
+  let currentScreen = "main"; // main / create / join
 
-  // Show popup
-  document.getElementById("roomIdDisplay").textContent = roomId;
-  document.getElementById("roomPopup").classList.remove("hidden");
-};
+  // Switch to Create Room
+  createRoomBtn.addEventListener("click", () => {
+    document.querySelector(".create-join-options").style.display = "none";
+    document.querySelector(".create-room").style.display = "block";
+    document.querySelector(".join-room").style.display = "none";
+    backBtn.style.display = "inline-block";
+    currentScreen = "create";
+  });
 
-/* Join Room */
-joinRoomBtn.onclick = () => {
-  roomJoinInputContainer.style.display = "block";
-};
-confirmJoinBtn.onclick = () => {
-  const name = usernameInput.value.trim();
-  const genderRad = document.querySelector('input[name="gender"]:checked');
-  const inputId = roomIdInput.value.trim();
-  if (!name || !inputId) return alert("Enter name and Room ID!");
-  username = name;
-  gender = genderRad.value;
-  roomId = inputId;
-  localStorage.setItem("bca_username", username);
-  localStorage.setItem("bca_gender", gender);
-  localStorage.setItem("bca_room", roomId);
-  enterChat();
-};
+  // Switch to Join Room
+  joinRoomBtn.addEventListener("click", () => {
+    document.querySelector(".create-join-options").style.display = "none";
+    document.querySelector(".join-room").style.display = "block";
+    document.querySelector(".create-room").style.display = "none";
+    backBtn.style.display = "inline-block";
+    currentScreen = "join";
+  });
 
-/* Enter Chat */
-function enterChat() {
+  // Back Button
+  backBtn.addEventListener("click", () => {
+    document.querySelector(".create-join-options").style.display = "block";
+    document.querySelector(".create-room").style.display = "none";
+    document.querySelector(".join-room").style.display = "none";
+    backBtn.style.display = "none";
+    currentScreen = "main";
+  });
+
+  // Create Room
+  enterBtn.addEventListener("click", () => {
+    username = usernameInput.value.trim();
+    gender = document.querySelector('input[name="gender"]:checked').value;
+    roomName = document.getElementById("roomNameInput").value.trim();
+
+    if (!username || !roomName) {
+      alert("Please enter name and room name!");
+      return;
+    }
+
+    roomId = "ROOM-" + Math.random().toString(36).substr(2, 6).toUpperCase();
+    alert(`Room Created!\nRoom ID: ${roomId}`);
+
+    startChat();
+  });
+
+  // Join Room
+  document.getElementById("joinRoomConfirmBtn").addEventListener("click", () => {
+    username = usernameInput.value.trim();
+    gender = document.querySelector('input[name="gender"]:checked').value;
+    roomId = document.getElementById("joinRoomId").value.trim().toUpperCase();
+    roomName = "Joined Room";
+
+    if (!username || !roomId) {
+      alert("Please enter name and room ID!");
+      return;
+    }
+
+    startChat();
+  });
+});
+
+// =======================
+// CHAT PAGE
+// =======================
+function startChat() {
   loginPage.classList.add("page--hidden");
   chatPage.classList.remove("page--hidden");
-  userBadge.textContent = `${username} · ${gender}`;
-  roomInfo.textContent = `#${roomId}`;
-  messagesDiv.innerHTML = "";
-  listenMessages();
+
+  userBadge.textContent = `${username} (${gender}) | ${roomName}`;
+
+  messagesContainer.innerHTML = "";
+  addSystemMessage(`Welcome ${username}! You joined ${roomName} (${roomId})`);
+
+  localStorage.setItem("roomData", JSON.stringify({ username, gender, roomId, roomName }));
 }
 
-/* Send Message */
-sendBtn.onclick = (e) => {
+// =======================
+// SEND MESSAGE
+// =======================
+sendBtn.addEventListener("click", (e) => {
   e.preventDefault();
+  sendMessage();
+});
+
+messageInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    sendMessage();
+  } else {
+    sendTypingIndicator();
+  }
+});
+
+function sendMessage() {
   const text = messageInput.value.trim();
   if (!text) return;
-  const msgRef = ref(db, `rooms/${roomId}/messages`);
-  const newMsg = push(msgRef);
-  set(newMsg, { user: username, gender, text, timestamp: Date.now() });
+
+  const msg = {
+    user: username,
+    gender,
+    text,
+    type: "self",
+  };
+
+  addMessage(msg);
   messageInput.value = "";
-};
-
-/* Listen Messages */
-function listenMessages() {
-  const msgRef = ref(db, `rooms/${roomId}/messages`);
-  onChildAdded(msgRef, (snap) => {
-    const msg = snap.val();
-    appendMessage(msg);
-  });
+  removeTypingIndicator();
 }
 
-/* Append Message */
-function appendMessage(msg) {
-  const el = document.createElement("div");
-  el.className = "message " + (msg.user === username ? "self" : "other");
-  const time = new Date(msg.timestamp).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
-  el.innerHTML = `
-    <span class="metaLine">
-      <span class="user">${msg.user}</span>
-      <span class="gender-badge">${msg.gender}</span>
-      <span style="color:var(--muted)">· ${time}</span>
-    </span>
-    <div class="text">${msg.text}</div>
+function addMessage({ user, gender, text, type }) {
+  const div = document.createElement("div");
+  div.classList.add("message", type === "self" ? "self" : "other");
+
+  const genderBadge = `<span class="gender-badge">${gender}</span>`;
+  div.innerHTML = `
+    <span class="metaLine"><span class="user">${user}</span>${genderBadge}</span>
+    ${text}
   `;
-  messagesDiv.appendChild(el);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+  messagesContainer.appendChild(div);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
-/* Logout & Clear Room */
-logoutBtn.onclick = async () => {
-  if (confirm("Exit room? Chat will be cleared.")) {
-    await remove(ref(db, `rooms/${roomId}/messages`));
-    localStorage.clear();
-    location.reload();
+function addSystemMessage(text) {
+  const div = document.createElement("div");
+  div.classList.add("message", "other");
+  div.innerHTML = `<span class="metaLine">🔔 System</span>${text}`;
+  messagesContainer.appendChild(div);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// =======================
+// TYPING INDICATOR
+// =======================
+function sendTypingIndicator() {
+  clearTimeout(typingTimeout);
+  showTypingIndicator();
+
+  typingTimeout = setTimeout(() => {
+    removeTypingIndicator();
+  }, 1500);
+}
+
+function showTypingIndicator() {
+  if (typingIndicator) return;
+  typingIndicator = document.createElement("div");
+  typingIndicator.classList.add("message", "other");
+  typingIndicator.textContent = "💬 Someone is typing...";
+  typingIndicator.id = "typingIndicator";
+  messagesContainer.appendChild(typingIndicator);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function removeTypingIndicator() {
+  if (typingIndicator) {
+    typingIndicator.remove();
+    typingIndicator = null;
   }
-};
+}
 
-/* Popup Logic */
-const popup = document.getElementById("roomPopup");
-const copyBtn = document.getElementById("copyRoomBtn");
-const closePopupBtn = document.getElementById("closePopupBtn");
-
-copyBtn.onclick = () => {
-  const text = document.getElementById("roomIdDisplay").textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    copyBtn.textContent = "Copied!";
-    setTimeout(() => (copyBtn.textContent = "Copy"), 2000);
-  });
-};
-
-closePopupBtn.onclick = () => {
-  popup.classList.add("hidden");
-  enterChat();
-};
+// =======================
+// LOGOUT
+// =======================
+logoutBtn.addEventListener("click", () => {
+  localStorage.removeItem("roomData");
+  username = "";
+  gender = "";
+  roomId = "";
+  roomName = "";
+  chatPage.classList.add("page--hidden");
+  loginPage.classList.remove("page--hidden");
+  messagesContainer.innerHTML = "";
+});
